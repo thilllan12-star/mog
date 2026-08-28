@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Face Analyzer | @Mognil_bot</title>
+    <style>
+        :root {
+            --bg-main: #0a0c10;
+            --bg-card: #12161f;
+            --border-color: #242e42;
+            --accent-cyan: #00f0ff;
+            --accent-glow: rgba(0, 240, 255, 0.35);
+            --accent-red: #ff3366;
+            --accent-gold: #ffaa00;
+            --accent-green: #00ff88;
+            --accent-purple: #b537f2;
+            --text-primary: #f0f4fc;
+            --text-secondary: #8c9cb8;
+            --text-muted: #57657e;
+            --font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: var(--font-stack);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(255, 51, 102, 0.05) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            padding: 30px 20px 60px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        /* Модальное окно предупреждения */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 7, 12, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 24px;
+            max-width: 500px;
+            width: 100%;
+            padding: 32px 26px;
+            text-align: center;
+            box-shadow: 0 0 40px var(--accent-glow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            animation: popUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popUp {
+            from { transform: scale(0.85); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #fff;
+        }
+
+        .modal-text {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .tg-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 136, 204, 0.15);
+            border: 1px solid #0088cc;
+            color: #00b0ff;
+            font-weight: 700;
+            padding: 8px 18px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .tg-badge:hover {
+            background: #0088cc;
+            color: #fff;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 136, 204, 0.5);
+        }
+
+        .btn-modal {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #00f0ff 0%, #0099ff 100%);
+            color: #030a14;
+            font-size: 16px;
+            font-weight: 800;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+
+        .btn-modal:hover {
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Шапка */
+        header {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.8); }
+        }
+
+        h1 {
+            font-size: clamp(26px, 5vw, 42px);
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #ffffff 40%, #00f0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+            max-width: 600px;
+            line-height: 1.5;
+        }
+
+        .card {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 36px 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 18px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.03);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(0, 240, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .upload-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .upload-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .preview-wrapper {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .preview-box {
+            width: 240px;
+            height: 240px;
+            border-radius: 20px;
+            border: 2px solid var(--accent-cyan);
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .scan-line {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 15px var(--accent-cyan), 0 0 30px var(--accent-cyan);
+            animation: scanAnim 2s infinite ease-in-out;
+            z-index: 10;
+        }
+
+        .scan-grid {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.2) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: 5;
+        }
+
+        @keyframes scanAnim {
+            0% { top: 0%; opacity: 0.8; }
+            50% { top: 96%; opacity: 1; }
+            100% { top: 0%; opacity: 0.8; }
+        }
+
+        .btn-change-photo {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: transparent;
+            border: 1px solid var(--border-color);
+            padding: 8px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .btn-analyze {
+            width: 100%;
+            padding: 18px 28px;
+            margin-top: 24px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #00f0ff 0%, #0099ff 100%);
+            color: #030a14;
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.35);
+            transition: all 0.3s ease;
+        }
+
+        .btn-analyze:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .btn-analyze:not(:disabled):hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 240, 255, 0.55);
+        }
+
+        .scan-status-wrapper {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin-top: 25px;
+            width: 100%;
+        }
+
+        .scan-log {
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--accent-cyan);
+            height: 24px;
+            text-align: center;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00f0ff, #ff3366);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .result-section {
+            display: none;
+            flex-direction: column;
+            gap: 28px;
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .result-archetype-tag {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .result-title {
+            font-size: clamp(26px, 4vw, 36px);
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .result-title.am-am {
+            background: linear-gradient(135deg, #ffc837 0%, #ff8008 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .result-title.subzero {
+            background: linear-gradient(135deg, #00f0ff 0%, #0072ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .result-title.hamam {
+            background: linear-gradient(135deg, #00ff88 0%, #00c853 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .result-title.burmaldot {
+            background: linear-gradient(135deg, #d500f9 0%, #ff1744 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .comparison-grid { grid-template-columns: 1fr; }
+        }
+
+        .comp-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .comp-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .comp-img-wrapper {
+            width: 100%;
+            height: 220px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #06080c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .comp-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 24px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .stat-name {
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-score {
+            font-weight: 800;
+            font-family: monospace;
+            font-size: 16px;
+        }
+
+        .stat-score.low { color: var(--accent-red); }
+        .stat-score.high { color: var(--accent-green); }
+        .stat-score.special { color: var(--accent-gold); }
+        .stat-score.purple { color: var(--accent-purple); }
+
+        .stat-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .stat-bar-val {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 4px solid var(--accent-cyan);
+            border-radius: 0 16px 16px 0;
+            padding: 20px 24px;
+        }
+
+        .summary-card.am-am { border-left-color: #ff8008; }
+        .summary-card.subzero { border-left-color: var(--accent-cyan); }
+        .summary-card.hamam { border-left-color: #00ff88; }
+        .summary-card.burmaldot { border-left-color: #d500f9; }
+
+        .summary-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .summary-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            min-width: 180px;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .scale-section {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 36px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .scale-title {
+            font-size: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .scale-img-box {
+            width: 100%;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            background: #000;
+        }
+
+        .scale-img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .scale-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .tier-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tier-name {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+        }
+
+        .tier-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Всплывающий дисклеймер при входе -->
+    <div class="modal-overlay" id="disclaimer-modal">
+        <div class="modal-box">
+            <div class="modal-icon">⚠️</div>
+            <div class="modal-title">Внимание</div>
+            <p class="modal-text">
+                Данный бот создан <strong>исключительно в юмористических целях</strong>, а не для реальной оценки лица! Все совпадения случайны.
+            </p>
+            <a href="https://t.me/Mognil_bot" target="_blank" class="tg-badge">
+                ✈️ Официальный бот: @Mognil_bot
+            </a>
+            <button class="btn-modal" onclick="closeDisclaimer()">Всё понятно</button>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <header>
+            <div class="badge">
+                <div class="badge-dot"></div>
+                @Mognil_bot • Face Scanner
+            </div>
+            <h1>Lookmaxxing Scanner</h1>
+            <p class="subtitle">
+                Загрузите селфи для мгновенной классификации фенотипа и определения уровня могинга.
+            </p>
+        </header>
+
+        <main class="card" id="analyzer-card">
+            
+            <!-- Экран загрузки -->
+            <div id="upload-stage">
+                <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-title">Перетащите сюда своё фото или нажмите для выбора</div>
+                    <div class="upload-desc">Поддерживаются форматы JPG, PNG, WEBP</div>
+                </div>
+                <input type="file" id="file-input" accept="image/*">
+
+                <div class="preview-wrapper" id="preview-wrapper">
+                    <div class="preview-box">
+                        <img id="user-preview" class="preview-img" alt="User selfie">
+                        <div class="scan-grid" id="scan-grid"></div>
+                        <div class="scan-line" id="scan-line"></div>
+                    </div>
+                    <button type="button" class="btn-change-photo" onclick="resetUpload(event)">
+                        Выбрать другое фото
+                    </button>
+                </div>
+
+                <button type="button" class="btn-analyze" id="btn-analyze" disabled onclick="startAnalysis()">
+                    Узнать кто ты
+                </button>
+
+                <div class="scan-status-wrapper" id="scan-status-wrapper">
+                    <div class="scan-log" id="scan-log">Инициализация биометрии...</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="scan-progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Экран результата -->
+            <div class="result-section" id="result-stage">
+                
+                <div class="result-header">
+                    <div class="result-archetype-tag">Результат фенотипического анализа</div>
+                    <div class="result-title" id="result-title">Subzero</div>
+                </div>
+
+                <div class="comparison-grid">
+                    <div class="comp-card">
+                        <div class="comp-label">Ваше фото</div>
+                        <div class="comp-img-wrapper">
+                            <img id="result-user-img" src="" alt="Ваше фото">
+                        </div>
+                    </div>
+                    <div class="comp-card">
+                        <div class="comp-label">Ваш фенотип в базе</div>
+                        <div class="comp-img-wrapper">
+                            <img id="result-archetype-img" src="" alt="Фенотип">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Динамические шкалы параметров -->
+                <div class="stats-container" id="stats-list"></div>
+
+                <div class="summary-card" id="summary-card">
+                    <div class="summary-label">О тебе:</div>
+                    <p class="summary-text" id="summary-text"></p>
+                </div>
+
+                <div class="result-actions">
+                    <button type="button" class="btn-secondary" onclick="restartTest()">Пройти еще раз</button>
+                    <button type="button" class="btn-secondary" onclick="scrollToScale()">Посмотреть шкалу</button>
+                    <a href="https://t.me/Mognil_bot" target="_blank" class="btn-secondary" style="background: rgba(0, 136, 204, 0.2); border-color: #0088cc; color: #00b0ff;">
+                        ✈️ Перейти в @Mognil_bot
+                    </a>
+                </div>
+
+            </div>
+
+        </main>
+
+        <section class="scale-section" id="scale-section">
+            <div class="scale-title">Официальная шкала оценивания</div>
+
+            <div class="scale-img-box">
+                <img src="scale.jpg" class="scale-img" alt="Шкала оценивания">
+            </div>
+
+            <div class="scale-legend">
+                <div class="tier-item">
+                    <div class="tier-name">Sub 3 / Sub 5</div>
+                    <div class="tier-desc">Критический дефицит симметрии, опущенная орбитальная зона.</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-name">LTN / MTN</div>
+                    <div class="tier-desc">Low / Mid Tier Normie. Среднестатистические параметры популяции.</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-name">HTN / Chad</div>
+                    <div class="tier-desc">Выраженный угол челюсти, высокая плотность фолликулов, охотничий взгляд.</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-name" style="color: #00ff88;">Тру хамам</div>
+                    <div class="tier-desc">Максимальный деп, хаммамный могер высшего ранга.</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-name" style="color: #d500f9;">Бурмалдот</div>
+                    <div class="tier-desc">Мы в шоколаде. За пределами человеческого понимания.</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-name" style="color: #ffaa00;">True am am / Subzero</div>
+                    <div class="tier-desc">Скрытые отрицательные и сверхмассивные формации.</div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            @Mognil_bot • Создано исключительно в юмористических целях.
+        </footer>
+
+    </div>
+
+    <script>
+        function closeDisclaimer() {
+            document.getElementById('disclaimer-modal').style.display = 'none';
+        }
+
+        // Пути к картинкам в репозитории
+        const ARCHETYPE_IMAGES = {
+            am_am: "am_am.jpg",
+            sub_0: "sub0.jpg",
+            hamam: "hamam.jpg",
+            burmaldot: "burmaldot.jpg"
+        };
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playBeep(freq, type, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type || 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playRevealSound() {
+            playBeep(300, 'triangle', 0.2);
+            setTimeout(() => playBeep(500, 'triangle', 0.25), 120);
+            setTimeout(() => playBeep(850, 'sine', 0.6), 250);
+        }
+
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const previewWrapper = document.getElementById('preview-wrapper');
+        const userPreview = document.getElementById('user-preview');
+        const btnAnalyze = document.getElementById('btn-analyze');
+        const scanGrid = document.getElementById('scan-grid');
+        const scanLine = document.getElementById('scan-line');
+        const scanStatusWrapper = document.getElementById('scan-status-wrapper');
+        const scanLog = document.getElementById('scan-log');
+        const scanProgressBar = document.getElementById('scan-progress-bar');
+        const uploadStage = document.getElementById('upload-stage');
+        const resultStage = document.getElementById('result-stage');
+        
+        let currentPhotoData = null;
+
+        ['dragenter', 'dragover'].forEach(name => {
+            dropZone.addEventListener(name, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+            dropZone.addEventListener(name, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Пожалуйста, загрузите изображение.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentPhotoData = e.target.result;
+                userPreview.src = currentPhotoData;
+                dropZone.style.display = 'none';
+                previewWrapper.style.display = 'flex';
+                btnAnalyze.disabled = false;
+                playBeep(440, 'sine', 0.1);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetUpload(e) {
+            if (e) e.stopPropagation();
+            fileInput.value = '';
+            currentPhotoData = null;
+            userPreview.src = '';
+            dropZone.style.display = 'flex';
+            previewWrapper.style.display = 'none';
+            btnAnalyze.disabled = true;
+            scanStatusWrapper.style.display = 'none';
+            scanGrid.style.display = 'none';
+            scanLine.style.display = 'none';
+        }
+
+        const logSteps = [
+            { text: "Калибровка биометрических точек лица...", progress: 15, delay: 500 },
+            { text: "Анализ угла рамки челюсти и наклона...", progress: 35, delay: 600 },
+            { text: "Сканирование уровня могинга и хаммамности...", progress: 60, delay: 600 },
+            { text: "Вычисление бурмалды и соотношения складок...", progress: 85, delay: 500 },
+            { text: "Сопоставление с базой @Mognil_bot...", progress: 100, delay: 400 }
+        ];
+
+        function startAnalysis() {
+            if (!currentPhotoData) return;
+            btnAnalyze.disabled = true;
+            scanGrid.style.display = 'block';
+            scanLine.style.display = 'block';
+            scanStatusWrapper.style.display = 'flex';
+            
+            let currentStep = 0;
+
+            function runStep() {
+                if (currentStep < logSteps.length) {
+                    const step = logSteps[currentStep];
+                    scanLog.textContent = step.text;
+                    scanProgressBar.style.width = step.progress + '%';
+                    playBeep(500 + currentStep * 120, 'sine', 0.12);
+                    currentStep++;
+                    setTimeout(runStep, step.delay);
+                } else {
+                    setTimeout(showResult, 300);
+                }
+            }
+
+            runStep();
+        }
+
+        // Данные всех 4 архетипов
+        const archetypes = [
+            {
+                id: 'am_am',
+                title: 'True am am',
+                titleClass: 'am-am',
+                img: ARCHETYPE_IMAGES.am_am,
+                stats: [
+                    { name: 'Скулы', score: '0/10', percent: '2%', type: 'low', color: 'var(--accent-red)' },
+                    { name: 'Волосы', score: '0/10', percent: '2%', type: 'low', color: 'var(--accent-red)' },
+                    { name: 'Складки', score: '99/10', percent: '100%', type: 'special', color: 'linear-gradient(90deg, #ff8008, #ffc837)' }
+                ],
+                summary: 'Ты босс КФС любитель Бургеров и вероятнее всего ты кричал Коч братан и танцуй пантера'
+            },
+            {
+                id: 'subzero',
+                title: 'Subzero',
+                titleClass: 'subzero',
+                img: ARCHETYPE_IMAGES.sub_0,
+                stats: [
+                    { name: 'Скулы', score: '0/10', percent: '2%', type: 'low', color: 'var(--accent-red)' },
+                    { name: 'Волосы', score: '0/10', percent: '2%', type: 'low', color: 'var(--accent-red)' }
+                ],
+                summary: 'ты сбежал из мортал комбата тебя могает каждый пузотряз вероятнее всего тебя зовут Савелий и у тебя один не мытый друг Иван Золочевский'
+            },
+            {
+                id: 'hamam',
+                title: 'Тру хамам',
+                titleClass: 'hamam',
+                img: ARCHETYPE_IMAGES.hamam,
+                stats: [
+                    { name: 'Умение могать', score: '10/10', percent: '100%', type: 'high', color: 'var(--accent-green)' },
+                    { name: 'Умение депать', score: '10/10', percent: '100%', type: 'high', color: 'var(--accent-green)' },
+                    { name: 'Скулы', score: '10/10', percent: '100%', type: 'high', color: 'var(--accent-green)' },
+                    { name: 'Мелстройность', score: '11/10', percent: '100%', type: 'special', color: 'linear-gradient(90deg, #00ff88, #00c853)' }
+                ],
+                summary: 'Ты любитель могать друнов, много депать, сидеть в хаммаме и стрелять бурмалдой'
+            },
+            {
+                id: 'burmaldot',
+                title: 'Бурмалдот',
+                titleClass: 'burmaldot',
+                img: ARCHETYPE_IMAGES.burmaldot,
+                stats: [
+                    { name: 'Брови', score: '1/2', percent: '50%', type: 'purple', color: '#b537f2' },
+                    { name: 'Скулы', score: 'не знаю/10', percent: '30%', type: 'purple', color: '#b537f2' },
+                    { name: 'Крутость', score: '67/10', percent: '100%', type: 'special', color: 'linear-gradient(90deg, #d500f9, #ff1744)' }
+                ],
+                summary: 'Мы в шоколаде'
+            }
+        ];
+
+        function showResult() {
+            uploadStage.style.display = 'none';
+            resultStage.style.display = 'flex';
+
+            const outcome = archetypes[Math.floor(Math.random() * archetypes.length)];
+
+            document.getElementById('result-title').textContent = outcome.title;
+            document.getElementById('result-title').className = 'result-title ' + outcome.titleClass;
+            document.getElementById('result-user-img').src = currentPhotoData;
+            document.getElementById('result-archetype-img').src = outcome.img;
+
+            const statsContainer = document.getElementById('stats-list');
+            statsContainer.innerHTML = '';
+            outcome.stats.forEach(st => {
+                const item = document.createElement('div');
+                item.className = 'stat-item';
+                item.innerHTML = `
+                    <div class="stat-header">
+                        <span class="stat-name">${st.name}</span>
+                        <span class="stat-score ${st.type}">${st.score}</span>
+                    </div>
+                    <div class="stat-bar-bg">
+                        <div class="stat-bar-val" style="width: ${st.percent}; background: ${st.color};"></div>
+                    </div>
+                `;
+                statsContainer.appendChild(item);
+            });
+
+            const summaryCard = document.getElementById('summary-card');
+            summaryCard.className = 'summary-card ' + outcome.titleClass;
+            document.getElementById('summary-text').textContent = outcome.summary;
+
+            playRevealSound();
+        }
+
+        function restartTest() {
+            resultStage.style.display = 'none';
+            uploadStage.style.display = 'block';
+            resetUpload();
+        }
+
+        function scrollToScale() {
+            document.getElementById('scale-section').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
